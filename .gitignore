@@ -1,0 +1,8 @@
+.cproject
+.mxproject
+.project
+.settings/
+.vscode-ctags
+.vscode/
+Debug/
+out/
