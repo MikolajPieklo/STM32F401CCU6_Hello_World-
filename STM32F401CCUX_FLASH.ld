@@ -162,6 +162,16 @@ SECTIONS
     __bss_end__ = _ebss;
   } >RAM
 
+  . = ALIGN(4);
+  .info_section :
+  {
+    _sinfo_section = .;
+    *(.info_section)
+    *(.info_section*)
+    . = ALIGN(4);
+    _einfo_section = .;
+  } >FLASH
+
   /* User_heap_stack section, used to check that there is enough "RAM" Ram  type memory left */
   ._user_heap_stack :
   {

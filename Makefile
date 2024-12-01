@@ -14,7 +14,11 @@ MACH := cortex-m4
 FLOAT_ABI := hard
 MAP  := -Wl,-Map=$(NAME).map  # Create map file
 GC   := -Wl,--gc-sections     # Link for code size
-DEBUGINFO := -DDEBUG -g3
+DEBUGINFO :=
+ifneq ($(MAKECMDGOALS),release)
+$(info Added debug symbols)
+DEBUGINFO += -DDEBUG -g3
+endif
 
 CFLAGS := \
 	-c \
@@ -57,9 +61,11 @@ INC := \
 	-IDrivers/CMSIS/Device/ST/STM32F4xx/Include/ \
 	-IDrivers/CMSIS/Include/
 
-.PHONY: all clean doc load DIR ELF HEX restart reset
+.PHONY: all clean doc load DIR ELF HEX restart reset release
 
 all: DIR ELF HEX
+
+release : all
 
 DIR:
 	@if [ ! -e $(OUT_DIR) ]; then mkdir $(OUT_DIR); fi
@@ -90,8 +96,10 @@ ELF: $(OBJ_DIR)/startup_stm32f401ccux.o $(OBJ_CORE) $(OBJ_DRIVERS)
 	$(CC) $(LDFLAGS) $^ -o $(OUT_DIR)/target.elf
 
 HEX:
+	python support/add_crc.py
 	@echo "$(ccblue)\nCreating hex file$(ccend)"
 	$(CC_OBJCOPY) -O ihex $(OUT_DIR)/target.elf $(OUT_DIR)/target.hex
+	$(CC_OBJCOPY) -O srec $(OUT_DIR)/target.elf $(OUT_DIR)/target.srec
 
 	@echo "$(ccblue)\nCreating bin file$(ccend)"
 	$(CC_OBJCOPY) -O binary  $(OUT_DIR)/target.elf  $(OUT_DIR)/target.bin
@@ -102,6 +110,8 @@ HEX:
 	@echo "$(ccpurple)"
 	arm-none-eabi-size $(OUT_DIR)/target.elf -A -x
 	@echo "$(ccend)"
+
+	python support/size_info.py out/target.bin
 
 clean:
 	rm -rf $(OUT_DIR)
