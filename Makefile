@@ -10,9 +10,12 @@ include tools/makefiles/makefile_clib.mk
 include tools/makefiles/makefile_common.mk
 
 SILENTMODE := yes
+USE_FREERTOS := yes
+FREERTOS_HEAP := heap_1
 
 NAME := $(OUT_DIR)/TARGET
 NAME_STARTUP_FILE := startup_stm32f401ccux
+NAME_LINKER_SCRIPT := STM32F401CCUX_FLASH
 NAME_OPENOCD_CFG := stm32f4x
 DEVICE := STM32F401xC
 SW_FLAG := DEFAULT
@@ -21,51 +24,18 @@ FLOAT_ABI := hard
 MAP  := -Wl,-Map=$(NAME).map  # Create map file
 GC   := -Wl,--gc-sections     # Link for code size
 
-CFLAGS := \
-	-c \
-	-mcpu=$(MACH) \
-	-mthumb \
-	-mfloat-abi=$(FLOAT_ABI) \
-	-std=gnu11 \
-	-O0 \
-	-D$(DEVICE) \
-	-D$(SW_FLAG) \
-	$(USE_NANO) \
-	-Wall \
-	-Wextra \
-	-ffunction-sections \
-	-fdata-sections \
-	-fstack-usage \
-	-MMD \
-	-Wfatal-errors \
-	-Werror=implicit \
-	-mfpu=fpv4-sp-d16 \
-	-fdiagnostics-color=always
-
-LDFLAGS := \
-	-mcpu=$(MACH) \
-	-mthumb \
-	-mfloat-abi=$(FLOAT_ABI) \
-	-mfpu=fpv4-sp-d16 \
-	-T"tools/STM32F401CCUX_FLASH.ld" \
-	$(MAP) \
-	$(GC) \
-	-static \
-	$(USE_NANO) \
-	-Wl,--start-group -lc -lm -Wl,--end-group
-
-CONST := -DUSE_FULL_LL_DRIVER -DHSE_VALUE=25000000 -DHSE_STARTUP_TIMEOUT=100 -DLSE_STARTUP_TIMEOUT=5000 \
-	-DLSE_VALUE=32768 -DHSI_VALUE=16000000 -DLSI_VALUE=32000 -DVDD_VALUE=3300 -DUSE_FULL_ASSERT=1U -DPREFETCH_ENABLE=1 \
-	-DINSTRUCTION_CACHE_ENABLE=1 -DDATA_CACHE_ENABLE=1 -DEXTERNAL_CLOCK_VALUE=12288000 $(CC_COMMON_MACRO)
+include tools/makefiles/makefile_flags.mk
 
 INC := \
 	-ICore/MAIN/inc/ \
+	-Itools/Reuse/inc/ \
 	-IDrivers/STM32F4xx_HAL_Driver/inc/ \
 	-IDrivers/CMSIS/Device/ST/STM32F4xx/Include/ \
-	-IDrivers/CMSIS/Include/
+	-IDrivers/CMSIS/Include/ \
+	-Itools/FreeRTOS-Kernel/include/ \
+	-Itools/FreeRTOS-Kernel/portable/GCC/ARM_CM4F/
 
 SRC_CORE_DIRS := Core/MAIN/src
-
 SRC_DRIVERS_DIR := Drivers/STM32F4xx_HAL_Driver/src
 
 ########################################################################################################################
