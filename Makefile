@@ -12,6 +12,7 @@ include tools/makefiles/makefile_common.mk
 SILENTMODE := yes
 USE_FREERTOS := yes
 FREERTOS_HEAP := heap_1
+USE_DOUBLE_PRECISION := no
 
 NAME := $(OUT_DIR)/TARGET
 NAME_STARTUP_FILE := startup_stm32f401ccux
@@ -21,8 +22,6 @@ DEVICE := STM32F401xC
 SW_FLAG := DEFAULT
 MACH := cortex-m4
 FLOAT_ABI := hard
-MAP  := -Wl,-Map=$(NAME).map  # Create map file
-GC   := -Wl,--gc-sections     # Link for code size
 
 include tools/makefiles/makefile_flags.mk
 
