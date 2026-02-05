@@ -59,7 +59,7 @@
 /* External variables --------------------------------------------------------*/
 
 /* USER CODE BEGIN EV */
-#if !defined(USE_RTOS)
+#ifndef USED_RTOS
 extern uint32_t SysTickValue;
 #endif
 
@@ -143,7 +143,7 @@ void UsageFault_Handler(void)
    }
 }
 
-#if !defined(USE_RTOS)
+#ifndef USED_RTOS
 /**
  * @brief This function handles System service call via SWI instruction.
  */
@@ -171,7 +171,7 @@ void DebugMon_Handler(void)
    /* USER CODE END DebugMonitor_IRQn 1 */
 }
 
-#if !defined(USE_RTOS)
+#ifndef USED_RTOS
 /**
  * @brief This function handles Pendable request for system service.
  */

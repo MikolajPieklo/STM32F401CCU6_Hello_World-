@@ -1,18 +1,40 @@
 #include "main.h"
 
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <stm32f4xx_ll_bus.h>
 #include <stm32f4xx_ll_crc.h>
 #include <stm32f4xx_ll_spi.h>
 
+#ifdef USED_RTOS
 #include <FreeRTOS.h>
+#include <task.h>
+#include <task_monitor.h>
+#endif
+#include <circual_buffer.h>
 #include <delay.h>
 #include <device_info.h>
 #include <gpio.h>
-#include <task.h>
+#include <log.h>
+#include <reuse.h>
+#include <rtc.h>
+#include <spi.h>
+#include <string.h>
+#include <uart.h>
 
+/* Dummy device */
+static const struct device main_dev = {
+   .name = "MAIN",
+};
+
+CirBuff_T cb_uart1_tx = {.tail = 0, .head = 0, .USARTx = USART1};
+CirBuff_T cb_uart1_rx = {.tail = 0, .head = 0, .USARTx = USART1};
+
+#ifdef USED_RTOS
 static void exampleTask(void *parameters) __attribute__((noreturn));
+static void exampleTask1(void *parameters) __attribute__((noreturn));
 
 static void exampleTask(void *parameters)
 {
@@ -22,10 +44,24 @@ static void exampleTask(void *parameters)
    for (;;)
    {
       /* Example Task Code */
+      log_info(&main_dev, "Test A\r\n");
       LL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-      vTaskDelay(100); /* delay 100 ticks */
+      vTaskDelay(5000); /* delay 1000 ticks */
    }
 }
+
+static void exampleTask1(void *parameters)
+{
+   /* Unused parameters. */
+   (void) parameters;
+
+   for (;;)
+   {
+      log_info(&main_dev, "Task B\r\n");
+      vTaskDelay(5500); /* delay 1000 ticks */
+   }
+}
+#endif
 
 void SystemClock_Config(void);
 void System_Delay_ms(uint32_t ms);
@@ -48,26 +84,38 @@ int main(void)
 
    /* Configure the system clock */
    SystemClock_Config();
-#if !defined(USE_RTOS)
+#ifndef USED_RTOS
    LL_SYSTICK_EnableIT();
 #endif
+   UART1_Init();
 
    /* Initialize all configured peripherals */
    MX_GPIO_Init();
    LL_GPIO_SetOutputPin(LED_GPIO_Port, LED_Pin);
+   RTC_Init();
    Device_Info();
+   SPI1_Init();
 
-#if defined(USE_RTOS)
+#ifdef USED_RTOS
    xTaskCreate(exampleTask, "example", configMINIMAL_STACK_SIZE, (void *) NULL, tskIDLE_PRIORITY,
                NULL);
+   xTaskCreate(exampleTask1, "example1", configMINIMAL_STACK_SIZE, (void *) NULL, tskIDLE_PRIORITY,
+               NULL);
+   ConfigureTimerForRunTimeStats();
+   StartTaskMonitor();
 
    vTaskStartScheduler();
 #endif
    while (1)
    {
+#ifndef USED_RTOS
       LL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-      TS_Delay_ms(100); /* delay 100 ticks */
+      TS_Delay_ms(1000); /* delay 1000 ticks */
+      log_info(&main_dev, "Hello\r\n");
+#endif
    }
+
+   return 0;
 }
 
 /**
@@ -137,6 +185,8 @@ void Error_Handler(void)
  */
 void assert_failed(uint8_t *file, uint32_t line)
 {
+   REUSE_UNUSED(file);
+   REUSE_UNUSED(line);
    /* USER CODE BEGIN 6 */
    /* User can add his own implementation to report the file name and line number,
       ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
@@ -144,7 +194,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
-#if defined(USE_RTOS)
+#ifdef USED_RTOS
 void vApplicationMallocFailedHook(void)
 {
    /* vApplicationMallocFailedHook() will only be called if
@@ -158,6 +208,9 @@ void vApplicationMallocFailedHook(void)
     * to query the size of free heap space that remains (although it does not
     * provide information on how the remaining heap might be fragmented). */
    taskDISABLE_INTERRUPTS();
+
+   printf("Malloc Failed!\r\n");
+   NVIC_SystemReset();
 
    for (;;)
    {
@@ -181,13 +234,17 @@ void vApplicationIdleHook(void)
 
 void vApplicationStackOverflowHook(TaskHandle_t pxTask, char *pcTaskName)
 {
-   (void) pcTaskName;
    (void) pxTask;
 
    /* Run time stack overflow checking is performed if
     * configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2.  This hook
     * function is called if a stack overflow is detected. */
    taskDISABLE_INTERRUPTS();
+
+   printf("STACK OVERFLOW! Task name = %s\r\n", pcTaskName);
+   // snprintf(, sizeof(), "STACK OVERFLOW! Task name = %s\r\n", pcTaskName);
+
+   NVIC_SystemReset();
 
    for (;;)
    {
