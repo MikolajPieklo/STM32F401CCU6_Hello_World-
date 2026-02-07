@@ -2,7 +2,7 @@
 # Date: 25.01.2026
 # Project: STM32F401CCU6_HELLO_WORLD.
 # License: Opensource
-# Version: 1.0.4
+# Version: 1.0.5
 
 include tools/makefiles/makefile_colors.mk
 include tools/makefiles/makefile_info.mk
@@ -44,7 +44,8 @@ INC := \
 	-Itools/Reuse/SI4432/inc/ \
 	-Itools/Reuse/WS25Qxx/inc/ \
 	-Itools/freertos/include/ \
-	-Itools/freertos/portable/GCC/ARM_CM4F/
+	-Itools/freertos/portable/GCC/ARM_CM4F/ \
+	-Itools/RTOS_MODULES/inc/
 
 SRC_CORE_DIRS := Core/MAIN/src
 SRC_DRIVERS_DIR := Drivers/STM32F4xx_HAL_Driver/src
@@ -54,10 +55,10 @@ SRC_SBL := tools/SBL/src
 
 .PHONY: all release sbl app doc
 
-all: check_flags DIR make_app make_sbl HEX_APP HEX_SBL HEX_COMBINED
-sbl: check_flags DIR make_sbl HEX_SBL
-app: check_flags DIR make_app HEX_APP
-doc: make_doc
+all: .check_flags .DIR make_app make_sbl HEX_APP HEX_SBL HEX_COMBINED
+sbl: .check_flags .DIR make_sbl HEX_SBL
+app: .check_flags .DIR make_app HEX_APP
+doc: .DIR make_doc
 release : all
 
 include tools/makefiles/makefile_dependencies.mk
@@ -65,7 +66,7 @@ include tools/makefiles/makefile_dependencies.mk
 include tools/makefiles/target_check_flags.mk
 include tools/makefiles/target_chip.mk
 include tools/makefiles/target_clean.mk
-include tools/makefiles/target_dir.mk
+#include tools/makefiles/target_dir.mk
 include tools/makefiles/make_doc.mk
 include tools/makefiles/make_app.mk
 include tools/makefiles/make_sbl.mk
