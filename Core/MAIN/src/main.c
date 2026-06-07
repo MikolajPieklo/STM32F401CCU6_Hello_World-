@@ -11,6 +11,7 @@
 #ifdef USED_RTOS
 #include <FreeRTOS.h>
 #include <task.h>
+#include <task_cc1101.h>
 #include <task_monitor.h>
 #endif
 #include <circual_buffer.h>
@@ -44,7 +45,7 @@ static void exampleTask(void *parameters)
    for (;;)
    {
       /* Example Task Code */
-      log_info(&main_dev, "Test A\r\n");
+      // log_info(&main_dev, "Test A\r\n");
       LL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
       vTaskDelay(5000); /* delay 1000 ticks */
    }
@@ -57,7 +58,7 @@ static void exampleTask1(void *parameters)
 
    for (;;)
    {
-      log_info(&main_dev, "Task B\r\n");
+      // log_info(&main_dev, "Task B\r\n");
       vTaskDelay(5500); /* delay 1000 ticks */
    }
 }
@@ -102,7 +103,8 @@ int main(void)
    xTaskCreate(exampleTask1, "example1", configMINIMAL_STACK_SIZE, (void *) NULL, tskIDLE_PRIORITY,
                NULL);
    ConfigureTimerForRunTimeStats();
-   StartTaskMonitor();
+   Task_Monitor_Create(NULL);
+   Task_CC1101_Create(NULL);
 
    vTaskStartScheduler();
 #endif
