@@ -46,7 +46,7 @@ static void exampleTask(void *parameters)
    {
       /* Example Task Code */
       // log_info(&main_dev, "Test A\r\n");
-      LL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+      // LL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
       vTaskDelay(5000); /* delay 1000 ticks */
    }
 }
